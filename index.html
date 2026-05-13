@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tienda de Ropa Moderna</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- === SUPABASE CLIENT === -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- ======================= -->
+<style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+        font-family:'Arial',sans-serif;
+        background:#0a0a0a;
+        color:#eaeaea;
+        overflow-x:hidden;
+        scroll-behavior:smooth;
+    }
+    /* HEADER */
+    header{
+        position:fixed;
+        top:0;
+        width:100%;
+        background:rgba(15,15,15,0.92);
+        backdrop-filter:blur(12px);
+        padding:16px 5%;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        z-index:10000;
+        border-bottom:1px solid rgba(255,255,255,0.08);
+    }
+    .header-left{display:flex;align-items:center;gap:18px}
+    .lang-btn{
+        background:#222;
+        color:white;
+        border:none;
+        padding:7px 16px;
+        border-radius:30px;
+        cursor:pointer;
+        font-weight:700;
+        font-size:14px;
+        transition:0.3s;
+    }
+    .lang-btn:hover{background:#00d4ff;transform:scale(1.05)}
+    .icon-btn{
+        background:none;border:none;color:#fff;cursor:pointer;font-size:23px;transition:0.3s;
+        position:relative;
+    }
+    .icon-btn:hover{color:#00d4ff}
+    .logo{font-size:26px;font-weight:900;letter-spacing:-1px;color:#fff}
+    .logo span{color:#00d4ff}
+    nav a{
+        color:#ccc;
+        margin-left:28px;
+        text-decoration:none;
+        font-weight:500;
+        transition:0.3s;
+        cursor:pointer;
+    }
+    nav a:hover{color:#00d4ff}
+
+    /* BADGE DEL CARRITO */
+    .cart-count{
+        position:absolute;
+        top:-6px;
+        right:-6px;
+        background:#00d4ff;
+        color:#000;
+        font-size:12px;
+        font-weight:900;
+        min-width:20px;
+        height:20px;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        box-shadow:0 0 0 3px rgba(10,10,10,0.9);
+    }
+
+    /* VISTA INICIO */
+    .home-view{min-height:100vh;background:#0a0a0a}
+    .hero{
+        height:100vh;
+        background:linear-gradient(rgba(10,10,10,0.65),rgba(10,10,10,0.75)),
+                   url('Ejemplo1.jpg') center/cover no-repeat;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        position:relative;
+    }
+    .hero-content{max-width:900px;padding:0 20px}
+    .hero-content h1{
+        font-size:5.2rem;
+        line-height:1.05;
+        font-weight:900;
+        margin-bottom:8px;
+        color:#fff;
+    }
+    .hero-content h1 span{color:#00d4ff}
+    .hero-content p{font-size:1.45rem;margin-bottom:35px;opacity:0.9}
+    .cta-btn{
+        background:#00d4ff;
+        color:white;
+        padding:16px 45px;
+        border:none;
+        border-radius:50px;
+        font-size:1.2rem;
+        font-weight:bold;
+        cursor:pointer;
+        transition:0.3s;
+        box-shadow:0 8px 25px rgba(0,212,255,0.35);
+    }
+    .cta-btn:hover{transform:scale(1.06)}
+
+    /* PRODUCTOS DESTACADOS Y GENERAL */
+    .featured-section{padding:80px 5% 100px;background:#111}
+    .featured-title,.section-title{
+        text-align:center;
+        font-size:2.8rem;
+        margin-bottom:60px;
+        font-weight:700;
+        position:relative;
+    }
+    .featured-title::after,.section-title::after{
+        content:'';
+        width:70px;
+        height:4px;
+        background:#00d4ff;
+        position:absolute;
+        bottom:-15px;
+        left:50%;
+        transform:translateX(-50%);
+    }
+    .featured-grid,.products{
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+        gap:30px;
+        max-width:1400px;
+        margin:0 auto;
+    }
+    .featured-card,.card{
+        background:#1a1a1a;
+        border-radius:18px;
+        overflow:hidden;
+        cursor:pointer;
+        transition:all 0.3s ease;
+        box-shadow:0 8px 20px rgba(0,0,0,0.25);
+    }
+    .featured-card:hover,.card:hover{
+        transform:translateY(-8px);
+        box-shadow:0 18px 35px rgba(0,212,255,0.2);
+    }
+    .featured-card img,.card img{
+        width:100%;
+        height:340px;
+        object-fit:cover;
+        transition:0.4s ease;
+    }
+    .featured-card:hover img,.card:hover img{transform:scale(1.05)}
+    .featured-card .card-content,.card-content{padding:22px}
+    .featured-card .card-content h3,.card-content h3{font-size:1.5rem;margin-bottom:6px}
+    .featured-card .card-content p,.card-content p{font-size:1.35rem;color:#00d4ff;font-weight:600}
+
+    /* VISTA PRODUCTOS */
+    .products-view{
+        display:none;
+        min-height:100vh;
+        background:#111;
+        padding:110px 5% 80px;
+        position:relative;
+    }
+    .products-view.active{display:block}
+    .back-btn{
+        position:absolute;
+        top:30px;
+        left:5%;
+        background:rgba(255,255,255,0.1);
+        color:#fff;
+        border:none;
+        padding:10px 20px;
+        border-radius:30px;
+        cursor:pointer;
+        font-size:1rem;
+        display:flex;
+        align-items:center;
+        gap:8px;
+        transition:0.3s;
+    }
+    .back-btn:hover{background:#00d4ff;color:#000}
+
+    /* MODAL PRODUCTO */
+    .modal{
+        position:fixed;inset:0;background:rgba(0,0,0,0.96);
+        display:flex;justify-content:center;align-items:center;
+        opacity:0;pointer-events:none;transition:0.3s ease;z-index:20000;
+    }
+    .modal.active{opacity:1;pointer-events:auto}
+    .modal-content{
+        width:94%;max-width:1150px;height:88vh;
+        background:#1a1a1a;border-radius:20px;overflow:hidden;display:flex;
+    }
+    .modal-image{flex:1;background-size:cover;background-position:center;transition:0.4s ease}
+    .modal-info{flex:1;padding:45px;display:flex;flex-direction:column;overflow-y:auto}
+    .close{position:absolute;top:22px;right:32px;font-size:42px;cursor:pointer;color:#fff;transition:0.3s}
+    .close:hover{color:#00d4ff;transform:rotate(90deg)}
+    .gallery{display:flex;gap:10px;margin:20px 0}
+    .thumb{width:72px;height:72px;background-size:cover;background-position:center;border-radius:10px;cursor:pointer;border:3px solid transparent;transition:0.3s}
+    .thumb.active{border-color:#00d4ff;transform:scale(1.08)}
+    .options{display:flex;gap:45px;margin:25px 0}
+    .sizes span{
+        display:inline-block;padding:11px 22px;border:2px solid #444;border-radius:50px;margin:5px 3px;cursor:pointer;transition:0.3s;
+    }
+    .sizes span.active{background:#00d4ff;border-color:#00d4ff;color:#000}
+    .colors span{
+        display:inline-block;width:36px;height:36px;border-radius:50%;margin:5px 3px;cursor:pointer;border:3px solid #222;
+    }
+    .colors span.active{border:4px solid #fff;box-shadow:0 0 0 5px #00d4ff}
+    .btn{
+        background:#00d4ff;color:#000;padding:17px;border-radius:50px;text-align:center;font-size:1.25rem;font-weight:bold;
+        cursor:pointer;margin-top:auto;transition:0.3s;
+    }
+    .btn:hover{background:#fff;transform:scale(1.04)}
+
+    /* MODALES REGISTRO / LOGIN */
+    #register-modal .modal-content,
+    #login-modal .modal-content{
+        width:100%;max-width:480px;height:auto;max-height:92vh;overflow-y:auto;flex-direction:column;
+        padding:40px 30px;border-radius:24px;box-shadow:0 0 60px rgba(0,212,255,0.3);
+    }
+    .register-header{text-align:center;margin-bottom:30px}
+    .register-header h2{font-size:2.2rem;margin-bottom:8px}
+    .register-form label{display:block;margin:18px 0 6px;font-weight:600;font-size:1.05rem}
+    .register-form input{
+        width:100%;padding:14px 16px;border-radius:12px;border:1px solid #444;
+        background:#222;color:#fff;font-size:1.05rem;transition:0.3s;
+    }
+    .register-form input:focus{outline:none;border-color:#00d4ff;box-shadow:0 0 0 3px rgba(0,212,255,0.2)}
+    .register-form button{
+        width:100%;margin-top:30px;background:#00d4ff;color:#000;padding:16px;
+        border:none;border-radius:50px;font-size:1.25rem;font-weight:bold;cursor:pointer;transition:0.3s;
+    }
+    .register-form button:hover{transform:scale(1.04);background:#fff}
+    .register-footer{text-align:center;margin-top:25px;font-size:0.95rem}
+    .register-footer a{color:#00d4ff;cursor:pointer;text-decoration:underline}
+
+    /* TOAST */
+    #cart-toast{
+        position:fixed;bottom:35px;right:35px;background:rgba(20,20,20,0.97);
+        backdrop-filter:blur(18px);border:1px solid rgba(0,212,255,0.5);border-radius:18px;
+        padding:18px 24px;box-shadow:0 20px 40px rgba(0,212,255,0.25);display:none;
+        align-items:center;gap:16px;z-index:30000;min-width:370px;
+    }
+    #cart-toast.show{display:flex;animation:toastIn 0.35s ease}
+    @keyframes toastIn{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+    #cart-toast i{color:#00d4ff;font-size:38px}
+    #cart-toast .toast-content{flex:1}
+    #cart-toast h4{margin:0 0 5px 0;font-size:1.25rem;color:#fff}
+    #cart-toast p{margin:0;color:#ddd;font-size:1rem}
+
+    /* ====================== MENÚ DE CESTA (CARRITO) ====================== */
+    .cart-sidebar{
+        position:fixed;
+        top:0;
+        right:-460px;
+        width:460px;
+        height:100vh;
+        background:#111;
+        box-shadow:-15px 0 40px rgba(0,0,0,0.6);
+        transition:right 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        z-index:25000;
+        display:flex;
+        flex-direction:column;
+        overflow:hidden;
+    }
+    .cart-sidebar.open{right:0}
+    .cart-header{
+        padding:25px 30px;
+        border-bottom:1px solid rgba(255,255,255,0.1);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        background:#1a1a1a;
+    }
+    .cart-header h2{font-size:1.8rem;font-weight:700}
+    .cart-close{
+        font-size:32px;cursor:pointer;color:#fff;transition:0.3s;
+    }
+    .cart-close:hover{color:#00d4ff;transform:rotate(90deg)}
+    .cart-body{
+        flex:1;
+        padding:20px 25px;
+        overflow-y:auto;
+    }
+    .cart-empty{
+        text-align:center;
+        padding:60px 20px;
+        color:#888;
+    }
+    .cart-empty i{font-size:80px;margin-bottom:20px;opacity:0.3}
+    .cart-item{
+        background:#1a1a1a;
+        border-radius:16px;
+        padding:15px;
+        margin-bottom:18px;
+        display:flex;
+        gap:15px;
+        position:relative;
+    }
+    .cart-item img{
+        width:80px;
+        height:80px;
+        object-fit:cover;
+        border-radius:12px;
+    }
+    .cart-item-info{flex:1}
+    .cart-item-info h4{margin-bottom:4px;font-size:1.15rem}
+    .cart-item-info .details{
+        font-size:0.95rem;
+        color:#aaa;
+        margin-bottom:8px;
+    }
+    .cart-item-price{
+        font-weight:700;
+        color:#00d4ff;
+        font-size:1.2rem;
+    }
+    .quantity-control{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        margin-top:8px;
+    }
+    .quantity-control button{
+        width:32px;height:32px;background:#222;border:none;color:#fff;
+        border-radius:50%;font-size:18px;cursor:pointer;
+    }
+    .quantity-control span{font-weight:700;min-width:30px;text-align:center}
+    .remove-btn{
+        position:absolute;
+        top:12px;
+        right:12px;
+        background:none;border:none;color:#ff4444;
+        font-size:22px;cursor:pointer;
+    }
+    .cart-footer{
+        padding:25px;
+        border-top:1px solid rgba(255,255,255,0.1);
+        background:#1a1a1a;
+    }
+    .cart-total{
+        display:flex;justify-content:space-between;font-size:1.4rem;margin-bottom:20px;
+    }
+    .cart-total span{font-weight:700}
+    .cart-checkout{
+        width:100%;
+        background:#00d4ff;
+        color:#000;
+        padding:18px;
+        border:none;
+        border-radius:50px;
+        font-size:1.3rem;
+        font-weight:bold;
+        cursor:pointer;
+        transition:0.3s;
+    }
+    .cart-checkout:hover{transform:scale(1.04);background:#fff}
+
+    @media(max-width:768px){
+        .cart-sidebar{width:100%;max-width:380px}
+        .hero-content h1{font-size:3.4rem}
+        .modal-content{flex-direction:column;height:100vh}
+        .modal-image{height:40vh}
+        #cart-toast{min-width:300px;right:15px;bottom:15px;padding:15px 20px}
+    }
+
+    .payment-method {
+    flex: 1;
+    text-align: center;
+    padding: 18px 12px;
+    background: #222;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+    border: 2px solid transparent;
+}
+
+.payment-method.active {
+    border-color: #00d4ff;
+    background: #1a1a1a;
+}
+
+.payment-method i {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+#payment-modal input {
+    width: 100%;
+    padding: 14px;
+    margin: 8px 0 18px;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 12px;
+    color: white;
+    font-size: 1.05rem;
+}
+
+#payment-modal input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+</style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <button class="lang-btn" id="langBtn">ES / EN</button>
+        <button class="icon-btn" id="user-btn"><i class="fa-regular fa-user"></i></button>
+        <button class="icon-btn" id="cart-btn">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <span id="cart-count" class="cart-count">0</span>
+        </button>
+    </div>
+    <div class="logo"><img src="LogoLargo.png" width="200"></div>
+    <nav>
+        <a id="nav-home">Inicio</a>
+        <a id="nav-products">Productos</a>
+    </nav>
+</header>
+
+<!-- VISTA INICIO -->
+<section id="home-view" class="home-view">
+    <div class="hero">
+        <div class="hero-content">
+            <h1>LO PIDES</h1>
+            <h1><span>LO TIENES</span></h1>
+            <p>Moda urbana premium • Envío exprés • Devolución 30 días</p>
+            <button class="cta-btn" id="cta-products">Ver toda la colección</button>
+        </div>
+    </div>
+    <div class="featured-section">
+        <h2 class="featured-title" id="featured-title">Productos Destacados</h2>
+        <div class="featured-grid">
+            <div class="featured-card" onclick="openModal(0)"><img src="Productos/Oversize-tee/AzulPreview.jpg" alt="Oversize Tee" loading="lazy"><div class="card-content"><h3 id="feat-title-0">Oversize Tee</h3><p>24.99€</p></div></div>
+            <div class="featured-card" onclick="openModal(1)"><img src="Productos/Oversize-hoodie/AzulPreview.jpg" alt="Oversize Hoodie" loading="lazy"><div class="card-content"><h3 id="feat-title-1">Oversize Hoodie</h3><p>39.99€</p></div></div>
+            <div class="featured-card" onclick="openModal(2)"><img src="Productos/Oversize-tee-blue/Preview.jpg" alt="Oversize Blue Tee" loading="lazy"><div class="card-content"><h3 id="feat-title-2">Oversize Blue Tee</h3><p>24.99€</p></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- VISTA PRODUCTOS -->
+<section id="products-view" class="products-view">
+    <button class="back-btn" onclick="showHome()"><i class="fa-solid fa-arrow-left"></i> Volver al inicio</button>
+    <h2 class="section-title" id="section-title">Todos los Productos</h2>
+    <div class="products" id="products-grid"></div>
+</section>
+
+<!-- MODAL PRODUCTO -->
+<div class="modal" id="modal">
+    <div class="close" onclick="closeModal()">✖</div>
+    <div class="modal-content">
+        <div class="modal-image" id="modal-img"></div>
+        <div class="modal-info">
+            <h2 id="modal-title"></h2>
+            <p id="modal-price" style="font-size:2rem;color:#00d4ff"></p>
+            <p id="modal-desc"></p>
+            <div class="gallery" id="gallery"></div>
+            <div class="options">
+                <div class="sizes">
+                    <strong id="size-label">Talla:</strong><br>
+                    <span onclick="selectSize(this)" class="active">S</span>
+                    <span onclick="selectSize(this)">M</span>
+                    <span onclick="selectSize(this)">L</span>
+                    <span onclick="selectSize(this)">XL</span>
+                </div>
+                <div class="colors">
+    <strong id="color-label">Color:</strong><br>
+    <div id="colors-container"></div>
+</div>
+            </div>
+            <div class="btn" id="add-btn" onclick="addToCart()">Añadir al carrito</div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE REGISTRO -->
+<div class="modal" id="register-modal">
+    <div class="modal-content">
+        <div class="close" onclick="closeRegisterModal()" style="top:20px;right:20px;">✖</div>
+        <div class="register-header">
+            <h2 id="register-title">Registrarse</h2>
+            <p id="register-subtitle">Crea tu cuenta y disfruta de beneficios exclusivos</p>
+        </div>
+        <form id="register-form" class="register-form" onsubmit="handleRegister(event)">
+            <label id="label-name">Nombre</label>
+            <input type="text" id="reg-name" required>
+            <label id="label-surname">Apellidos</label>
+            <input type="text" id="reg-surname" required>
+            <label id="label-email">Correo electrónico</label>
+            <input type="email" id="reg-email" required>
+            <label id="label-password">Contraseña</label>
+            <input type="password" id="reg-password" required minlength="6">
+            <label id="label-birthdate">Fecha de nacimiento</label>
+            <input type="date" id="reg-birthdate" required>
+            <button type="submit" id="register-btn">Registrarse</button>
+        </form>
+        <div class="register-footer">
+            ¿Ya tienes cuenta?
+            <a onclick="switchToLogin()">Iniciar sesión</a>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE INICIO DE SESIÓN -->
+<div class="modal" id="login-modal">
+    <div class="modal-content">
+        <div class="close" onclick="closeLoginModal()" style="top:20px;right:20px;">✖</div>
+        <div class="register-header">
+            <h2 id="login-title">Iniciar sesión</h2>
+            <p id="login-subtitle">Accede a tu cuenta de LUXEMODA</p>
+        </div>
+        <form id="login-form" class="register-form" onsubmit="handleLogin(event)">
+            <label id="label-login-email">Correo electrónico</label>
+            <input type="email" id="login-email" required autocomplete="email">
+            <label id="label-login-password">Contraseña</label>
+            <input type="password" id="login-password" required minlength="6" autocomplete="current-password">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 20px;font-size:0.9rem;">
+                <label style="cursor:pointer;display:flex;align-items:center;gap:6px;">
+                    <input type="checkbox" id="remember-me" style="accent-color:#00d4ff;"> Recordarme
+                </label>
+                <a onclick="forgotPassword()" style="color:#00d4ff;cursor:pointer;">¿Olvidaste tu contraseña?</a>
+            </div>
+            <button type="submit" id="login-btn">Iniciar sesión</button>
+        </form>
+        <div class="register-footer">
+            ¿No tienes cuenta?
+            <a onclick="switchToRegister()">Registrarse</a>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="cart-toast">
+    <i class="fa-solid fa-bag-shopping"></i>
+    <div class="toast-content">
+        <h4 id="toast-title">¡Añadido al carrito!</h4>
+        <p id="toast-info"></p>
+    </div>
+</div>
+
+<!-- MENÚ DE CESTA - CARRITO FUNCIONAL -->
+<div id="cart-sidebar" class="cart-sidebar">
+    <div class="cart-header">
+        <h2 id="cart-title">Tu Carrito</h2>
+        <span class="cart-close" onclick="toggleCart()">✖</span>
+    </div>
+    <div class="cart-body" id="cart-body">
+        <!-- Se llena con JavaScript -->
+    </div>
+    <div class="cart-footer">
+        <div class="cart-total">
+            <span id="cart-total-label">Total</span>
+            <span id="cart-total-price">0.00€</span>
+        </div>
+        <button class="cart-checkout" id="checkout-btn" onclick="checkout()">Proceder al pago</button>
+        <button onclick="clearCart()" style="margin-top:12px;width:100%;background:transparent;border:2px solid #444;color:#ccc;padding:14px;border-radius:50px;cursor:pointer">Vaciar carrito</button>
+    </div>
+</div>
+
+    <!-- MODAL DE PAGO -->
+<div class="modal" id="payment-modal">
+    <div class="modal-content" style="max-width:1100px; height:92vh; flex-direction:row;">
+        <!-- Columna izquierda: Resumen del pedido -->
+        <div style="flex:1; background:#151515; padding:40px; overflow-y:auto;">
+            <h2 id="payment-summary-title" style="margin-bottom:25px;">Resumen del pedido</h2>
+            <div id="payment-items"></div>
+            
+            <div style="margin:30px 0; border-top:1px solid #333; padding-top:20px;">
+                <div style="display:flex; justify-content:space-between; margin:12px 0;">
+                    <span>Subtotal</span>
+                    <span id="payment-subtotal">0.00€</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin:12px 0;">
+                    <span>Envío</span>
+                    <span style="color:#0f0;">Gratis</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin:12px 0; font-size:1.35rem; font-weight:700;">
+                    <span>Total</span>
+                    <span id="payment-total">0.00€</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha: Formulario de pago -->
+        <div style="flex:1; padding:40px; background:#1a1a1a; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+                <h2 id="payment-title">Método de pago</h2>
+                <span class="close" onclick="closePaymentModal()" style="position:relative; top:0; right:0;">✖</span>
+            </div>
+
+            <!-- Opciones de pago -->
+            <div style="display:flex; gap:12px; margin-bottom:30px;">
+                <div onclick="selectPaymentMethod(0)" id="method-0" class="payment-method active">
+                    <i class="fa-solid fa-credit-card"></i><br>Tarjeta
+                </div>
+                <div onclick="selectPaymentMethod(1)" id="method-1" class="payment-method">
+                    <i class="fa-brands fa-paypal"></i><br>PayPal
+                </div>
+                <div onclick="selectPaymentMethod(2)" id="method-2" class="payment-method">
+                    <i class="fa-solid fa-mobile-screen"></i><br>Bizum
+                </div>
+            </div>
+
+            <!-- Formulario Tarjeta -->
+            <div id="card-form">
+                <label>Número de tarjeta</label>
+                <input type="text" id="card-number" maxlength="19" placeholder="4242 4242 4242 4242" oninput="formatCardNumber(this)">
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                    <div>
+                        <label>Fecha de caducidad</label>
+                        <input type="text" id="card-expiry" maxlength="5" placeholder="MM/AA">
+                    </div>
+                    <div>
+                        <label>CVV</label>
+                        <input type="text" id="card-cvv" maxlength="4" placeholder="123">
+                    </div>
+                </div>
+
+                <label>Nombre en la tarjeta</label>
+                <input type="text" id="card-name" placeholder="Nombre Apellido">
+            </div>
+
+            <!-- Mensajes para otros métodos -->
+            <div id="other-methods" style="display:none; text-align:center; padding:40px 20px;">
+                <p>Redirigiendo a <strong id="other-method-name"></strong>...</p>
+            </div>
+
+            <button onclick="processPayment()" id="pay-button" 
+                    style="margin-top:auto; background:#00d4ff; color:#000; padding:18px; font-size:1.3rem; font-weight:bold; border-radius:50px;">
+                Pagar 0.00€
+            </button>
+
+            <p style="text-align:center; margin-top:15px; font-size:0.9rem; opacity:0.7;">
+                🔒 Pago seguro con encriptación SSL
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ==================== SUPABASE CONFIG ==================== */
+const SUPABASE_URL = 'https://sppprhvlotyczbfbnhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_NbReu85I1VvdbQngDW5Lpg_uZxMhyqO';
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ==================== PRODUCTOS ==================== */
+const products = [
+    {
+        title_es: "Oversize Tee",
+        title_en: "Oversize Tee",
+        price: "24.99€",
+        desc_es: "Camiseta premium de corte oversize con forro interior suave. Material resistente a golpes.",
+        desc_en: "Premium oversized T-shirt with soft inner lining. Impact-resistant material.",
+
+        colors: [
+            {
+                code:"#a0cce9",
+                images:[
+                    "Productos/Oversize-tee/Azul.jpg",
+                    "Productos/Oversize-tee/Azul_Atras.jpg"
+                ]
+            },
+            {
+                code:"#cb6ce6",
+                images:[
+                    "Productos/Oversize-tee/Rosa.jpg",
+                    "Productos/Oversize-tee/Rosa_Atras.png"
+                ]
+            },
+            {
+                code:"#ffde59",
+                images:[
+                    "Productos/Oversize-tee/Amarillo.jpg",
+                    "Productos/Oversize-tee/Amarillo_Atras.jpg"
+                ]
+            }
+        ]
+    },
+
+    {
+        title_es: "Oversize Hoodie",
+        title_en: "Oversize Hoodie",
+        price: "39.99€",
+        desc_es: "Sudadera oversize, preparada para reventarla en el campo.",
+        desc_en: "Oversized sweatshirt, ready to tear it up on the track.",
+
+        colors: [
+            {
+                code:"#1e90ff",
+                images:[
+                    "Productos/Oversize-hoodie/Azul.jpg",
+                    "Productos/Oversize-hoodie/Azul_Atras.jpg"
+                ]
+            },
+            {
+                code:"#ff69b4",
+                images:[
+                    "Productos/Oversize-hoodie/Rosa.jpg",
+                    "Productos/Oversize-hoodie/Rosa_Atras.jpg"
+                ]
+            },
+            {
+                code:"#f1c40f",
+                images:[
+                    "Productos/Oversize-hoodie/Amarillo.jpg",
+                    "Productos/Oversize-hoodie/Amarillo_Atras.jpg"
+                ]
+            }
+        ]
+    },
+
+    {
+        title_es: "Blue Oversize Tee",
+        title_en: "Blue Oversize Tee",
+        price: "24.99€",
+        desc_es: "Camiseta premium de corte oversize con forro interior suave.",
+        desc_en: "Premium oversized T-shirt with soft inner lining.",
+
+        colors: [
+            {
+                code:"#3498db",
+                images:[
+                    "Productos/Oversize-tee-blue/Azul.jpg",
+                    "Productos/Oversize-tee-blue/Azul_atras.jpg"
+                ]
+            },
+            {
+                code:"#ffffff",
+                images:[
+                    "Productos/Oversize-tee-blue/Blanco.jpg",
+                    "Productos/Oversize-tee-blue/Blanco_atras.jpg"
+                ]
+            }
+        ]
+    },
+
+    {
+        title_es: "Oversize Hoodie Blue",
+        title_en: "Oversize Hoodie Blue",
+        price: "39.99€",
+        desc_es: "Sudadera oversize premium.",
+        desc_en: "Premium oversized hoodie.",
+
+        colors: [
+            {
+                code:"#2c3e50",
+                images:[
+                    "Productos/Oversize-hoodie-blue/Azul.jpg",
+                    "Productos/Oversize-hoodie-blue/Azul_atras.jpg"
+                ]
+            },
+            {
+                code:"#f1c40f",
+                images:[
+                    "Productos/Oversize-hoodie-blue/Amarillo.jpg",
+                    "Productos/Oversize-hoodie-blue/Amarillo_atras.jpg"
+                ]
+            }
+        ]
+    }
+];
+
+/* ==================== VARIABLES GLOBALES ==================== */
+let currentLang = "es";
+let currentProduct = 0;
+let selectedSize = "S";
+let selectedColor = "#a0cce9";
+let currentUser = null;
+let cart = [];
+
+/* ==================== CARRITO FUNCIONAL ==================== */
+function loadCart() {
+    const saved = localStorage.getItem('luxemoda_cart');
+    if (saved) cart = JSON.parse(saved);
+    updateCartCount();
+}
+
+function saveCart() {
+    localStorage.setItem('luxemoda_cart', JSON.stringify(cart));
+    updateCartCount();
+}
+
+function updateCartCount() {
+    const countEl = document.getElementById('cart-count');
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    countEl.textContent = totalItems;
+    countEl.style.display = totalItems > 0 ? 'flex' : 'none';
+}
+
+function addToCart() {
+    if (!selectedSize || !selectedColor) {
+        alert(currentLang === "es" ? "Selecciona talla y color" : "Select size and color");
+        return;
+    }
+    const product = products[currentProduct];
+    const item = {
+        id: Date.now(),
+        productIndex: currentProduct,
+        title: currentLang === "es" ? product.title_es : product.title_en,
+        price: parseFloat(product.price),
+        size: selectedSize,
+        color: selectedColor,
+        image: product.colors.find(c => c.code === selectedColor).images[0],
+        quantity: 1
+    };
+    const existing = cart.find(i => i.productIndex === item.productIndex && i.size === item.size && i.color === item.color);
+    if (existing) {
+        existing.quantity++;
+    } else {
+        cart.push(item);
+    }
+    saveCart();
+    showCartToast();
+}
+
+function removeFromCart(id) {
+    cart = cart.filter(item => item.id !== id);
+    saveCart();
+    renderCart();
+}
+
+function updateQuantity(id, change) {
+    const item = cart.find(i => i.id === id);
+    if (item) {
+        item.quantity += change;
+        if (item.quantity < 1) item.quantity = 1;
+        saveCart();
+        renderCart();
+    }
+}
+
+function renderCart() {
+    const body = document.getElementById('cart-body');
+    body.innerHTML = '';
+    if (cart.length === 0) {
+        body.innerHTML = `
+            <div class="cart-empty">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <h3>${currentLang === "es" ? "Tu carrito está vacío" : "Your cart is empty"}</h3>
+                <p>${currentLang === "es" ? "Añade algunos productos para comenzar" : "Add some products to get started"}</p>
+            </div>`;
+        document.getElementById('cart-total-price').textContent = '0.00€';
+        return;
+    }
+    cart.forEach(item => {
+        const itemHTML = `
+            <div class="cart-item">
+                <img src="${item.image}" alt="${item.title}">
+                <div class="cart-item-info">
+                    <h4>${item.title}</h4>
+                    <div class="details">${item.size} • <span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:${item.color};vertical-align:middle"></span></div>
+                    <div class="quantity-control">
+                        <button onclick="updateQuantity(${item.id}, -1)">–</button>
+                        <span>${item.quantity}</span>
+                        <button onclick="updateQuantity(${item.id}, 1)">+</button>
+                    </div>
+                    <div class="cart-item-price">${(item.price * item.quantity).toFixed(2)}€</div>
+                </div>
+                <button class="remove-btn" onclick="removeFromCart(${item.id})">✕</button>
+            </div>`;
+        body.innerHTML += itemHTML;
+    });
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    document.getElementById('cart-total-price').textContent = total.toFixed(2) + '€';
+}
+
+function toggleCart() {
+    const sidebar = document.getElementById('cart-sidebar');
+    sidebar.classList.toggle('open');
+    if (sidebar.classList.contains('open')) renderCart();
+}
+
+function clearCart() {
+    if (confirm(currentLang === "es" ? "¿Vaciar todo el carrito?" : "Clear entire cart?")) {
+        cart = [];
+        saveCart();
+        renderCart();
+    }
+}
+
+function checkout() {
+    if (cart.length === 0) return;
+    alert(currentLang === "es" ? "¡Gracias por tu compra! 🎉 (Simulación de pago)" : "Thank you for your purchase! 🎉 (Payment simulation)");
+    cart = [];
+    saveCart();
+    toggleCart();
+}
+
+/* ==================== TOAST ==================== */
+function showCartToast() {
+    const toast = document.getElementById('cart-toast');
+    const product = products[currentProduct];
+    const name = currentLang === 'es' ? product.title_es : product.title_en;
+    document.getElementById('toast-title').textContent = currentLang === 'es' ? '¡Añadido al carrito!' : 'Added to cart!';
+    document.getElementById('toast-info').innerHTML = `${name} <strong>${selectedSize}</strong>`;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3800);
+}
+
+/* ==================== FUNCIONES ORIGINALES ==================== */
+function showHome() {
+    document.getElementById("home-view").style.display = "block";
+    document.getElementById("products-view").classList.remove("active");
+}
+function showProducts() {
+    document.getElementById("home-view").style.display = "none";
+    document.getElementById("products-view").classList.add("active");
+    renderAllProducts();
+}
+function renderAllProducts() {
+    const container = document.getElementById("products-grid");
+    container.innerHTML = "";
+
+    products.forEach((p, i) => {
+
+        const preview =
+            p.colors[0].images[0];
+
+        const cardHTML = `
+        <div class="card" onclick="openModal(${i})">
+            <img src="${preview}" alt="${p.title_es}" loading="lazy">
+            <div class="card-content">
+                <h3>${currentLang === "es" ? p.title_es : p.title_en}</h3>
+                <p>${p.price}</p>
+            </div>
+        </div>`;
+
+        container.innerHTML += cardHTML;
+    });
+}
+function openModal(i) {
+
+    currentProduct = i;
+
+    const p = products[i];
+
+    const modal = document.getElementById("modal");
+
+    modal.classList.add("active");
+
+    document.getElementById("modal-title").innerText =
+        currentLang === "es"
+        ? p.title_es
+        : p.title_en;
+
+    document.getElementById("modal-price").innerText =
+        p.price;
+
+    document.getElementById("modal-desc").innerText =
+        currentLang === "es"
+        ? p.desc_es
+        : p.desc_en;
+
+    selectedColor = p.colors[0].code;
+
+    document.getElementById("modal-img").style.backgroundImage =
+        `url(${p.colors[0].images[0]})`;
+
+    renderColors();
+
+    loadGallery(
+        p.colors[0].images
+    );
+}
+function loadGallery(images) {
+
+    const gallery =
+        document.getElementById("gallery");
+
+    gallery.innerHTML = "";
+
+    images.forEach((img, i) => {
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            `thumb ${i === 0 ? 'active' : ''}`;
+
+        div.style.backgroundImage =
+            `url(${img})`;
+
+        div.onclick = () => {
+
+            document.getElementById("modal-img").style.backgroundImage =
+                `url(${img})`;
+
+            document.querySelectorAll('.thumb')
+                .forEach(t => t.classList.remove('active'));
+
+            div.classList.add('active');
+        };
+
+        gallery.appendChild(div);
+    });
+}
+function closeModal() { document.getElementById("modal").classList.remove("active"); }
+function selectSize(el) {
+    document.querySelectorAll('.sizes span').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    selectedSize = el.textContent;
+}
+function selectColor(el, colorData) {
+
+    document.querySelectorAll('#colors-container span')
+        .forEach(c => c.classList.remove('active'));
+
+    el.classList.add('active');
+
+    selectedColor =
+        colorData.code;
+
+    document.getElementById("modal-img").style.backgroundImage =
+        `url(${colorData.images[0]})`;
+
+    loadGallery(
+        colorData.images
+    );
+}
+    function renderColors() {
+
+    const container =
+        document.getElementById("colors-container");
+
+    container.innerHTML = "";
+
+    const p = products[currentProduct];
+
+    p.colors.forEach((color, index) => {
+
+        const span =
+            document.createElement("span");
+
+        span.style.background =
+            color.code;
+
+        if(index === 0)
+            span.classList.add("active");
+
+        span.onclick = () =>
+            selectColor(span, color);
+
+        container.appendChild(span);
+    });
+}
+/* ==================== SESIÓN ==================== */
+function loadSavedSession() {
+    let userData = localStorage.getItem('luxemoda_user');
+    if (!userData) userData = sessionStorage.getItem('luxemoda_user');
+    if (userData) {
+        currentUser = JSON.parse(userData);
+        document.getElementById("user-btn").innerHTML = `<i class="fa-solid fa-circle-user"></i>`;
+    }
+}
+function logout() {
+    currentUser = null;
+    localStorage.removeItem('luxemoda_user');
+    sessionStorage.removeItem('luxemoda_user');
+    document.getElementById("user-btn").innerHTML = `<i class="fa-regular fa-user"></i>`;
+    alert(currentLang === "es" ? "Sesión cerrada correctamente" : "Logged out successfully");
+}
+
+/* ==================== MODALES AUTENTICACIÓN ==================== */
+function openRegisterModal() {
+    document.getElementById("register-modal").classList.add("active");
+    updateRegisterLabels();
+}
+function closeRegisterModal() {
+    document.getElementById("register-modal").classList.remove("active");
+}
+function openLoginModal() {
+    document.getElementById("login-modal").classList.add("active");
+    updateLoginLabels();
+}
+function closeLoginModal() {
+    document.getElementById("login-modal").classList.remove("active");
+}
+async function handleRegister(e) {
+    e.preventDefault();
+    // ... (código original de registro sin cambios)
+    const name = document.getElementById("reg-name").value.trim();
+    const surname = document.getElementById("reg-surname").value.trim();
+    const email = document.getElementById("reg-email").value.trim();
+    const password = document.getElementById("reg-password").value;
+    const birthdate = document.getElementById("reg-birthdate").value;
+    if (!name || !surname || !email || !password || !birthdate) {
+        alert(currentLang === "es" ? "Por favor completa todos los campos" : "Please fill in all fields");
+        return;
+    }
+    const registerBtn = document.getElementById("register-btn");
+    const originalText = registerBtn.innerText;
+    registerBtn.innerText = currentLang === "es" ? "Registrando..." : "Registering...";
+    registerBtn.disabled = true;
+    try {
+        const { data, error } = await supabaseClient.from('usuarios').insert([{nombre: name, apellidos: surname, correo_electronico: email, contraseña: password, fecha_nacimiento: birthdate}]).select();
+        if (error) throw error;
+        alert(currentLang === "es" ? `¡Registro completado con éxito! 🎉\nBienvenido, ${name} ${surname}` : `Registration successful! 🎉\nWelcome, ${name} ${surname}`);
+        closeRegisterModal();
+        document.getElementById("register-form").reset();
+        setTimeout(() => openLoginModal(), 800);
+    } catch (error) {
+        alert(currentLang === "es" ? `Error: ${error.message}` : `Error: ${error.message}`);
+    } finally {
+        registerBtn.innerText = originalText;
+        registerBtn.disabled = false;
+    }
+}
+async function handleLogin(e) {
+    e.preventDefault();
+    // ... (código original de login sin cambios)
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+    if (!email || !password) {
+        alert(currentLang === "es" ? "Por favor ingresa correo y contraseña" : "Please enter email and password");
+        return;
+    }
+    const loginBtn = document.getElementById("login-btn");
+    const originalText = loginBtn.innerText;
+    loginBtn.innerText = currentLang === "es" ? "Iniciando sesión..." : "Signing in...";
+    loginBtn.disabled = true;
+    try {
+        const { data, error } = await supabaseClient.from('usuarios').select('*').eq('correo_electronico', email).single();
+        if (error || !data) throw new Error(currentLang === "es" ? "Usuario no encontrado" : "User not found");
+        if (data.contraseña !== password) throw new Error(currentLang === "es" ? "Contraseña incorrecta" : "Incorrect password");
+        currentUser = data;
+        const rememberMe = document.getElementById("remember-me").checked;
+        if (rememberMe) localStorage.setItem('luxemoda_user', JSON.stringify(data));
+        else sessionStorage.setItem('luxemoda_user', JSON.stringify(data));
+        alert(currentLang === "es" ? `¡Bienvenido de nuevo, ${data.nombre}! 👋` : `Welcome back, ${data.nombre}! 👋`);
+        closeLoginModal();
+        document.getElementById("login-form").reset();
+        document.getElementById("user-btn").innerHTML = `<i class="fa-solid fa-circle-user"></i>`;
+    } catch (error) {
+        alert(currentLang === "es" ? `Error: ${error.message}` : `Error: ${error.message}`);
+    } finally {
+        loginBtn.innerText = originalText;
+        loginBtn.disabled = false;
+    }
+}
+function forgotPassword() {
+    alert(currentLang === "es" ? "En un proyecto real recibirías un email de recuperación.\nPor ahora, prueba con los datos que registraste." : "In a real project you would receive a recovery email.\nFor now, use the credentials you registered.");
+}
+function switchToLogin() { closeRegisterModal(); setTimeout(() => openLoginModal(), 300); }
+function switchToRegister() { closeLoginModal(); setTimeout(() => openRegisterModal(), 300); }
+function updateLoginLabels() {
+    document.getElementById("login-title").innerText = currentLang === "es" ? "Iniciar sesión" : "Sign In";
+    document.getElementById("login-subtitle").innerText = currentLang === "es" ? "Accede a tu cuenta de LUXEMODA" : "Access your LUXEMODA account";
+    document.getElementById("label-login-email").innerText = currentLang === "es" ? "Correo electrónico" : "Email";
+    document.getElementById("label-login-password").innerText = currentLang === "es" ? "Contraseña" : "Password";
+    document.getElementById("login-btn").innerText = currentLang === "es" ? "Iniciar sesión" : "Sign In";
+}
+function updateRegisterLabels() {
+    document.getElementById("register-title").innerText = currentLang === "es" ? "Registrarse" : "Sign Up";
+    document.getElementById("register-subtitle").innerText = currentLang === "es" ? "Crea tu cuenta y disfruta de beneficios exclusivos" : "Create your account and enjoy exclusive benefits";
+    document.getElementById("label-name").innerText = currentLang === "es" ? "Nombre" : "First Name";
+    document.getElementById("label-surname").innerText = currentLang === "es" ? "Apellidos" : "Last Name";
+    document.getElementById("label-email").innerText = currentLang === "es" ? "Correo electrónico" : "Email";
+    document.getElementById("label-password").innerText = currentLang === "es" ? "Contraseña" : "Password";
+    document.getElementById("label-birthdate").innerText = currentLang === "es" ? "Fecha de nacimiento" : "Date of Birth";
+    document.getElementById("register-btn").innerText = currentLang === "es" ? "Registrarse" : "Sign Up";
+}
+
+/* ==================== CAMBIO DE IDIOMA ==================== */
+document.getElementById("langBtn").onclick = () => {
+    currentLang = currentLang === "es" ? "en" : "es";
+    document.getElementById("nav-home").innerText = currentLang === "es" ? "Inicio" : "Home";
+    document.getElementById("nav-products").innerText = currentLang === "es" ? "Productos" : "Products";
+    document.getElementById("featured-title").innerText = currentLang === "es" ? "Productos Destacados" : "Featured Products";
+    document.getElementById("section-title").innerText = currentLang === "es" ? "Todos los Productos" : "All Products";
+    document.getElementById("size-label").innerText = currentLang === "es" ? "Talla:" : "Size:";
+    document.getElementById("color-label").innerText = currentLang === "es" ? "Color:" : "Color:";
+    document.getElementById("add-btn").innerText = currentLang === "es" ? "Añadir al carrito" : "Add to cart";
+    document.getElementById("cart-title").innerText = currentLang === "es" ? "Tu Carrito" : "Your Cart";
+    document.getElementById("cart-total-label").innerText = currentLang === "es" ? "Total" : "Total";
+    document.getElementById("checkout-btn").innerText = currentLang === "es" ? "Proceder al pago" : "Proceed to checkout";
+    for (let i = 0; i < 3; i++) {
+        const titleEl = document.getElementById(`feat-title-${i}`);
+        if (titleEl) titleEl.innerText = currentLang === "es" ? products[i].title_es : products[i].title_en;
+    }
+    if (document.getElementById("products-view").classList.contains("active")) renderAllProducts();
+    if (document.getElementById("modal").classList.contains("active")) {
+        const p = products[currentProduct];
+        document.getElementById("modal-title").innerText = currentLang === "es" ? p.title_es : p.title_en;
+        document.getElementById("modal-desc").innerText = currentLang === "es" ? p.desc_es : p.desc_en;
+    }
+    if (document.getElementById("register-modal").classList.contains("active")) updateRegisterLabels();
+    if (document.getElementById("login-modal").classList.contains("active")) updateLoginLabels();
+    if (document.getElementById("cart-sidebar").classList.contains("open")) renderCart();
+};
+
+/* ==================== NAVEGACIÓN ==================== */
+document.getElementById("nav-home").onclick = showHome;
+document.getElementById("nav-products").onclick = showProducts;
+document.getElementById("cta-products").onclick = showProducts;
+document.getElementById("user-btn").onclick = () => {
+    if (currentUser) {
+        if (confirm(currentLang === "es" ? "¿Quieres cerrar sesión?" : "Do you want to log out?")) logout();
+    } else openLoginModal();
+};
+
+/* ==================== INICIALIZACIÓN ==================== */
+window.addEventListener('load', () => {
+    loadSavedSession();
+    loadCart();
+    document.getElementById("cart-btn").onclick = toggleCart;
+    // Cerrar con ESC
+    document.addEventListener('keydown', e => {
+        if (e.key === "Escape") {
+            if (document.getElementById("modal").classList.contains("active")) closeModal();
+            else if (document.getElementById("register-modal").classList.contains("active")) closeRegisterModal();
+            else if (document.getElementById("login-modal").classList.contains("active")) closeLoginModal();
+            else if (document.getElementById("cart-sidebar").classList.contains("open")) toggleCart();
+        }
+    });
+});
+
+    let currentPaymentMethod = 0;
+
+function openPaymentModal() {
+    if (cart.length === 0) return;
+    
+    document.getElementById("payment-modal").classList.add("active");
+    renderPaymentSummary();
+    selectPaymentMethod(0);
+}
+
+function closePaymentModal() {
+    document.getElementById("payment-modal").classList.remove("active");
+}
+
+function renderPaymentSummary() {
+    const container = document.getElementById("payment-items");
+    let html = '';
+    let subtotal = 0;
+
+    cart.forEach(item => {
+        const totalItem = item.price * item.quantity;
+        subtotal += totalItem;
+        html += `
+            <div style="display:flex; gap:15px; margin-bottom:18px;">
+                <img src="${item.image}" style="width:70px; height:70px; object-fit:cover; border-radius:10px;">
+                <div style="flex:1;">
+                    <h4>${item.title} - ${item.size}</h4>
+                    <p style="opacity:0.7;">${item.quantity} × ${item.price.toFixed(2)}€</p>
+                </div>
+                <div style="text-align:right; font-weight:700;">${totalItem.toFixed(2)}€</div>
+            </div>`;
+    });
+
+    container.innerHTML = html;
+    document.getElementById("payment-subtotal").textContent = subtotal.toFixed(2) + "€";
+    document.getElementById("payment-total").textContent = subtotal.toFixed(2) + "€";
+    document.getElementById("pay-button").textContent = `Pagar ${subtotal.toFixed(2)}€`;
+}
+
+function selectPaymentMethod(method) {
+    currentPaymentMethod = method;
+    document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
+    document.getElementById(`method-${method}`).classList.add('active');
+
+    document.getElementById("card-form").style.display = method === 0 ? "block" : "none";
+    document.getElementById("other-methods").style.display = method !== 0 ? "block" : "none";
+
+    if (method !== 0) {
+        document.getElementById("other-method-name").textContent = 
+            method === 1 ? "PayPal" : "Bizum";
+    }
+}
+
+function formatCardNumber(input) {
+    let value = input.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    let formatted = value.match(/.{1,4}/g)?.join(' ') || '';
+    input.value = formatted;
+}
+
+async function processPayment() {
+    const btn = document.getElementById("pay-button");
+    const originalText = btn.textContent;
+    
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Procesando pago...`;
+
+    // Simulación de procesamiento
+    await new Promise(resolve => setTimeout(resolve, 2200));
+
+    alert("✅ ¡Pago realizado con éxito!\n\nGracias por tu compra en LUXEMODA 🎉");
+    
+    // Vaciar carrito
+    cart = [];
+    saveCart();
+    closePaymentModal();
+    toggleCart(); // cierra también el carrito
+}
+
+// Actualizar el botón del carrito
+document.getElementById("checkout-btn").onclick = openPaymentModal;
+</script>
+</body>
+</html>
